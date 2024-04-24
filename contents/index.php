@@ -1,13 +1,11 @@
 <?php
 
-// ToDo クラスの定義
 class ToDo {
     private $id;
     private $title;
     private $createdTime;
     private $updatedTime;
 
-    // コンストラクタ
     public function __construct($id, $title, $createdTime, $updatedTime) {
         $this->id = $id;
         $this->title = $title;
@@ -15,52 +13,48 @@ class ToDo {
         $this->updatedTime = $updatedTime;
     }
 
-    // メソッド：ToDoのIDを取得
     public function getId() {
         return $this->id;
     }
 
-    // メソッド：ToDoのタイトルを取得
     public function getTitle() {
         return $this->title;
     }
 
-    // メソッド：ToDoの作成日時を取得
     public function getCreatedTime() {
         return $this->createdTime;
     }
 
-    // メソッド：ToDoの更新日時を取得
     public function getUpdatedTime() {
         return $this->updatedTime;
     }
 }
 
-// ToDoList クラスの定義
 class ToDoList {
-    private $todos = [];
+    private $pdo;
 
-    // メソッド：ToDoを追加
-    public function add($todo) {
-        $this->todos[] = $todo;
+    public function __construct($pdo) {
+        $this->pdo = $pdo;
     }
 
-    // メソッド：ToDoリストを取得
-    public function getTodos() {
-        return $this->todos;
+    public function add($todo) {
+        $stmt = $this->pdo->prepare("INSERT INTO todosTble (title, created_at, updated_at) VALUES (?, ?, ?)");
+        $stmt->execute([$todo->getTitle(), $todo->getCreatedTime(), $todo->getUpdatedTime()]);
+    }
+
+    public function getAllTodos() {
+        $stmt = $this->pdo->query('SELECT * FROM todosTable ORDER BY created_at DESC');
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
 
-// config.php ファイルをインクルード
-require_once __DIR__.'/config/config.php';
+require_once 'config.php';
 
-// データベース接続を確立する関数
 function connectDB() {
-    global $host, $dbname, $username, $password;
-    
+    echo TEST;
     // 接続情報を使用してデータベースに接続
     try {
-        $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
+        $pdo = new PDO("mysql:host=$databaseHost;dbname=$databaseName", $databaseUsername, $databasePassword);
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         return $pdo;
     } catch (PDOException $e) {
@@ -68,44 +62,23 @@ function connectDB() {
     }
 }
 
+
+
 // データベース接続を確立
 $pdo = connectDB();
 
 // ToDo を取得するクエリを実行
-$stmt = $pdo->query('SELECT * FROM todos ORDER BY created_at DESC');
+$stmt = $pdo->query('SELECT * FROM todosTable ORDER BY created_at DESC');
 
-// 取得した ToDo を表示する
-echo "<ul>";
-while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    echo "<li>";
-        echo "<div>"; // 情報をラップするdiv要素
-            echo "<strong>" . htmlspecialchars($row['title']) . "</strong> - 作成日時: " . htmlspecialchars($row['created_at']) . "、更新日時: " . htmlspecialchars($row['updated_at']);
-        echo "</div>"; 
+// データベース接続を確立
+$pdo = connectDB();
 
-    // 編集ボタンと削除ボタンを含むdiv要素。このdiv要素が右側に配置。
-        echo "<div>";
-            echo "<a href='edit.php?id=" . $row['id'] . "'>編集</a>";
-            echo "<a href='delete.php?id=" . $row['id'] . "'>削除</a>";
-        echo "</div>";
+// ToDoList インスタンスを作成
+$todoList = new ToDoList($pdo);
 
-    echo "</li>";
-}
-echo "</ul>";
+// 全ての ToDo を取得
+$allTodos = $todoList->getAllTodos();
 
-// フォームが送信されたかどうかを確認
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // フォームから入力されたデータを取得
-    $title = $_POST['title'];
-    $content = $_POST['content'];
-
-    // データベースに新しいToDoを追加
-    $stmt = $pdo->prepare("INSERT INTO todos (title, content) VALUES (?, ?)");
-    $stmt->execute([$title, $content]);
-
-    // 新しいToDoが追加された後、リダイレクトするなどの処理を行う
-    header("Location: index.php");
-    exit();
-}
 ?>
 
 <!DOCTYPE html>
@@ -113,10 +86,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Task</title>
+    <title>ToDo App</title>
 </head>
 <body>
-    <h1>New Task</h1>
+    <h1>ToDo List</h1>
+    <ul>
+        <?php foreach ($allTodos as $todo): ?>
+            <li>
+                <div>
+                    <strong><?= htmlspecialchars($todo['title']) ?></strong> - 作成日時: <?= htmlspecialchars($todo['created_at']) ?>、更新日時: <?= htmlspecialchars($todo['updated_at']) ?>
+                </div>
+                <div>
+                    <a href='edit.php?id=<?= $todo['id'] ?>'>Edit</a>
+                    <a href='delete.php?id=<?= $todo['id'] ?>'>Delete</a>
+                </div>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+
+    <h2>New Task</h2>
     <form action="" method="post">
         <label for="title">Title:</label><br>
         <input type="text" id="title" name="title" required><br><br>
@@ -126,43 +114,3 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </form>
 </body>
 </html>
-
-<?php
-
-
-
-
-echo "<ul>";
-while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    echo "<li>";
-        echo "<div>"; // 情報をラップするdiv要素
-            echo "<strong>" . htmlspecialchars($row['title']) . "</strong> - 作成日時: " . htmlspecialchars($row['created_at']) . "、更新日時: " . htmlspecialchars($row['updated_at']);
-        echo "</div>"; 
-
-        // 編集ボタンへのリンクを追加
-        echo "<div>";
-            echo "<a href='edit.php?id=" . $row['id'] . "'>Edit</a>";
-            echo "<a href='delete.php?id=" . $row['id'] . "'>Delete</a>";
-        echo "</div>";
-
-    echo "</li>";
-}
-echo "</ul>";
-
-
-
-
-require_once 'config.php'; // データベース接続情報を含むファイルを読み込む
-
-// URL パラメータから削除する ToDo の ID を取得
-$id = $_GET['id'];
-
-// データベースで対象の ToDo を削除
-$stmt = $pdo->prepare("DELETE FROM todos WHERE id = ?");
-$stmt->execute([$id]);
-
-// 削除後に index.php にリダイレクト
-header("Location: index.php");
-exit();
-
-?>
