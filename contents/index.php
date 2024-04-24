@@ -51,10 +51,10 @@ class ToDoList {
 require_once 'config.php';
 
 function connectDB() {
-    echo TEST;
     // 接続情報を使用してデータベースに接続
     try {
-        $pdo = new PDO("mysql:host=$databaseHost;dbname=$databaseName", $databaseUsername, $databasePassword);
+        var_dump("mysql:host=".databaseHost.";dbname=".databaseName);
+        $pdo = new PDO("mysql:host=".databaseHost.";dbname=".databaseName, databaseUsername, databasePassword);
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         return $pdo;
     } catch (PDOException $e) {

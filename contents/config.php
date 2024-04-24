@@ -1,7 +1,7 @@
 <?php
 
 // データベース接続情報
-$databaseHost = 'localhost';
-$databaseName = 'TODOapp';
-$databaseUsername = 'root';
-$databasePassword = 'root';
+define('databaseHost','localhost');
+define('databaseName','TODOapp');
+define('databaseUsername','root');
+define('databasePassword','root');
