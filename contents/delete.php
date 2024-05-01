@@ -1,6 +1,6 @@
 <?php
 // データベース接続情報を含むファイルを読み込む
-require_once 'config.php';
+require_once 'connect_db.php';
 
 // データベース接続を確立
 $pdo = connectDB();
@@ -9,7 +9,7 @@ $pdo = connectDB();
 $id = $_GET['id'];
 
 // データベースで対象の ToDo を削除
-$stmt = $pdo->prepare("DELETE FROM todos WHERE id = ?");
+$stmt = $pdo->prepare("DELETE FROM todosTable WHERE id = ?");
 $stmt->execute([$id]);
 
 // 削除後に index.php にリダイレクト
