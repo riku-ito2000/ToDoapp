@@ -1,3 +1,3 @@
 <?php
 
-$sql= 'SELECT code, name, '
+// $sql= 'SELECT code, name, '

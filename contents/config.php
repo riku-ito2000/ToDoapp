@@ -6,6 +6,4 @@ define('databaseName','TODOapp');
 define('databaseUsername','root');
 define('databasePassword','root');
 
-
-//テストコミット用に記述
 ?>

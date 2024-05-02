@@ -63,14 +63,14 @@ function connectDB() {
 }
 
 
-
+// データベース接続を確立
+$pdo = connectDB();
 
 
 // ToDo を取得するクエリを実行
 $stmt = $pdo->query('SELECT * FROM todosTable ORDER BY created_at DESC');
 
-// データベース接続を確立
-$pdo = connectDB();
+
 
 // ToDoList インスタンスを作成
 $todoList = new ToDoList($pdo);
@@ -113,3 +113,4 @@ $allTodos = $todoList->getAllTodos();
     </form>
 </body>
 </html>
+
