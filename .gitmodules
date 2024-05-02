@@ -1,0 +1,3 @@
+[submodule "ToDoapp"]
+	path = ToDoapp
+	url = git@github.com:riku-ito2000/ToDoapp.git
