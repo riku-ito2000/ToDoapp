@@ -4,11 +4,11 @@ require_once 'connect_db.php';
 // データベース接続を確立
 $pdo = connectDB();
 
-// フォームから送信されたデータがある場合は、更新処理を行う
+// フォームから送信されたデータがある場合は、追加処理を行う
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id = $_POST['id'] ?? '';
     $title = $_POST['title'] ?? '';
     $content = $_POST['content'] ?? '';
+    $createdTime = date('Y-m-d H:i:s');
     $updatedTime = date('Y-m-d H:i:s');
 
     // バリデーション
@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($content)) {
-        $errors[] = 'コンテンツを入力してください。』';
+        $errors[] = 'コンテンツを入力してください。';
     }
 
     // エラーチェック
@@ -28,25 +28,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo "<p>$error</p>";
         }
     } else {
-        // データベースを更新
-        $stmt = $pdo->prepare("UPDATE todosTable SET title = ?, content = ?, updated_at = ? WHERE id = ?");
-        $stmt->execute([$title, $content, $updatedTime, $id]);
+        // データベースに挿入
+        $stmt = $pdo->prepare("INSERT INTO todosTable (title, content, created_at, updated_at) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$title, $content, $createdTime, $updatedTime]);
 
         // 成功メッセージまたはリダイレクト
         header('Location: index.php'); // インデックスページにリダイレクト
-        exit();
-    }
-} else {
-    // GETリクエストの場合は、編集フォームを表示
-    $id = $_GET['id'] ?? '';
-
-    // ToDoの情報を取得
-    $stmt = $pdo->prepare("SELECT * FROM todosTable WHERE id = ?");
-    $stmt->execute([$id]);
-    $todo = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$todo) {
-        echo "指定されたToDoが見つかりません。";
         exit();
     }
 }
@@ -57,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit</title>
+    <title>New Task</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -100,20 +87,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .edit-form input[type="submit"]:hover {
             background-color: #45a049;
         }
+        .edit-form a {
+            display: inline-block;
+            margin-top: 10px;
+            color: #007bff;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        .edit-form a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
     <div class="edit-form">
-        <h1>Edit ToDo</h1>
+        <h1>New Task</h1>
 
-        <form action="edit.php" method="post">
-            <input type="hidden" name="id" value="<?= htmlspecialchars($todo['id']) ?>">
+        <form action="task_add.php" method="post">
             <label for="title">Title:</label><br>
-            <input type="text" id="title" name="title" value="<?= htmlspecialchars($todo['title']) ?>" required><br><br>
+            <input type="text" id="title" name="title" required><br><br>
             <label for="content">Content:</label><br>
-            <textarea id="content" name="content" required><?= htmlspecialchars($todo['content']) ?></textarea><br><br>
-            <input type="submit" value="Update">
+            <textarea id="content" name="content" required></textarea><br><br>
+            <input type="submit" value="Create">
         </form>
+
         <a href="index.php">Back to ToDo List</a>
     </div>
 </body>
