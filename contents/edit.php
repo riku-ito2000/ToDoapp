@@ -100,6 +100,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .edit-form input[type="submit"]:hover {
             background-color: #45a049;
         }
+        .edit-form a {
+            display: inline-block;
+            margin-top: 10px;
+            color: #007bff;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        .edit-form a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -114,6 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <textarea id="content" name="content" required><?= htmlspecialchars($todo['content']) ?></textarea><br><br>
             <input type="submit" value="Update">
         </form>
+        
         <a href="index.php">Back to ToDo List</a>
     </div>
 </body>

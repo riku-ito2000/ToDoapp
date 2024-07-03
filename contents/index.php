@@ -42,11 +42,21 @@ class ToDoList {
         $stmt->execute([$todo->getTitle(), $todo->getCreatedTime(), $todo->getUpdatedTime()]);
     }
 
-    public function getAllTodos() {
-        $stmt = $this->pdo->query('SELECT * FROM todosTable ORDER BY created_at DESC');
+    public function getAllTodos($start, $tasksPerPage) {
+        $stmt = $this->pdo->prepare('SELECT * FROM todosTable ORDER BY created_at DESC LIMIT :start, :tasksPerPage');
+        $stmt->bindParam(':start', $start, PDO::PARAM_INT);
+        $stmt->bindParam(':tasksPerPage', $tasksPerPage, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function getTotalTasks() {
+        $stmt = $this->pdo->query('SELECT COUNT(*) FROM todosTable');
+        return $stmt->fetchColumn();
+    }
 }
+
+
 
 // 必要なファイルをインクルード
 require_once('connect_db.php');
@@ -57,9 +67,23 @@ $pdo = connectDB();
 // ToDoList インスタンスを作成
 $todoList = new ToDoList($pdo);
 
-// 全ての ToDo を取得
-$allTodos = $todoList->getAllTodos();
+// 1ページあたりのタスク数
+$tasksPerPage = 5;
 
+// 現在のページ番号を取得（デフォルトは1ページ目）
+$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+
+// ページ番号から取得開始位置を計算
+$start = ($page - 1) * $tasksPerPage;
+
+// 全体のタスク数を取得
+$totalTasks = $todoList->getTotalTasks();
+
+// 総ページ数を計算
+$totalPages = ceil($totalTasks / $tasksPerPage);
+
+// 現在のページに表示するタスクを取得
+$allTodos = $todoList->getAllTodos($start, $tasksPerPage);
 ?>
 
 <!DOCTYPE html>
@@ -125,6 +149,29 @@ $allTodos = $todoList->getAllTodos();
         .btn-edit:hover, .btn-delete:hover {
             background-color: #005f6b;
         }
+        .pagination {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .pagination a, .pagination span {
+            display: inline-block;
+            padding: 8px 16px;
+            text-decoration: none;
+            margin: 0 4px;
+        }
+        .pagination a {
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 4px;
+        }
+        .pagination a:hover {
+            background-color: #45a049;
+        }
+        .pagination span {
+            background-color: #ddd;
+            color: #333;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -145,6 +192,17 @@ $allTodos = $todoList->getAllTodos();
             </div>
         </div>
     <?php endforeach; ?>
+
+    <!-- ページネーションリンクを表示 -->
+    <div class="pagination">
+        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+            <?php if ($i == $page): ?>
+                <span><?= $i ?></span>
+            <?php else: ?>
+                <a href="?page=<?= $i ?>"><?= $i ?></a>
+            <?php endif; ?>
+        <?php endfor; ?>
+    </div>
 </body>
 </html>
 
