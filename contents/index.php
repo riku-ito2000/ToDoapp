@@ -1,65 +1,8 @@
 <?php
 
-class ToDo {
-    private $id;
-    private $title;
-    private $createdTime;
-    private $updatedTime;
-
-    public function __construct($id, $title, $createdTime, $updatedTime) {
-        $this->id = $id;
-        $this->title = $title;
-        $this->createdTime = $createdTime;
-        $this->updatedTime = $updatedTime;
-    }
-
-    public function getId() {
-        return $this->id;
-    }
-
-    public function getTitle() {
-        return $this->title;
-    }
-
-    public function getCreatedTime() {
-        return $this->createdTime;
-    }
-
-    public function getUpdatedTime() {
-        return $this->updatedTime;
-    }
-}
-
-class ToDoList {
-    private $pdo;
-
-    public function __construct($pdo) {
-        $this->pdo = $pdo;
-    }
-
-    public function add($todo) {
-        $stmt = $this->pdo->prepare("INSERT INTO todosTable (title, created_at, updated_at) VALUES (?, ?, ?)");
-        $stmt->execute([$todo->getTitle(), $todo->getCreatedTime(), $todo->getUpdatedTime()]);
-    }
-
-    public function getAllTodos($start, $tasksPerPage) {
-        $stmt = $this->pdo->prepare('SELECT * FROM todosTable ORDER BY created_at DESC LIMIT :start, :tasksPerPage');
-        $stmt->bindParam(':start', $start, PDO::PARAM_INT);
-        $stmt->bindParam(':tasksPerPage', $tasksPerPage, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function getTotalTasks() {
-        $stmt = $this->pdo->query('SELECT COUNT(*) FROM todosTable');
-        return $stmt->fetchColumn();
-    }
-}
-
-
-
 // 必要なファイルをインクルード
 require_once('connect_db.php');
+require_once('Controller.php');
 
 // データベース接続を確立
 $pdo = connectDB();
