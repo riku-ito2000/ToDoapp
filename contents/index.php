@@ -38,46 +38,52 @@ class ToDoList {
     }
 
     public function add($todo) {
-        $stmt = $this->pdo->prepare("INSERT INTO todosTble (title, created_at, updated_at) VALUES (?, ?, ?)");
+        $stmt = $this->pdo->prepare("INSERT INTO todosTable (title, created_at, updated_at) VALUES (?, ?, ?)");
         $stmt->execute([$todo->getTitle(), $todo->getCreatedTime(), $todo->getUpdatedTime()]);
     }
 
-    public function getAllTodos() {
-        $stmt = $this->pdo->query('SELECT * FROM todosTable ORDER BY created_at DESC');
+    public function getAllTodos($start, $tasksPerPage) {
+        $stmt = $this->pdo->prepare('SELECT * FROM todosTable ORDER BY created_at DESC LIMIT :start, :tasksPerPage');
+        $stmt->bindParam(':start', $start, PDO::PARAM_INT);
+        $stmt->bindParam(':tasksPerPage', $tasksPerPage, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-}
 
-require_once 'config.php';
-
-function connectDB() {
-    // 接続情報を使用してデータベースに接続
-    try {
-        // var_dump("mysql:host=".databaseHost.";dbname=".databaseName);
-        $pdo = new PDO("mysql:host=".databaseHost.";dbname=".databaseName, databaseUsername, databasePassword);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        return $pdo;
-    } catch (PDOException $e) {
-        die("データベースに接続できません: " . $e->getMessage());
+    public function getTotalTasks() {
+        $stmt = $this->pdo->query('SELECT COUNT(*) FROM todosTable');
+        return $stmt->fetchColumn();
     }
 }
 
+
+
+// 必要なファイルをインクルード
+require_once('connect_db.php');
 
 // データベース接続を確立
 $pdo = connectDB();
 
-
-// ToDo を取得するクエリを実行
-$stmt = $pdo->query('SELECT * FROM todosTable ORDER BY created_at DESC');
-
-
-
 // ToDoList インスタンスを作成
 $todoList = new ToDoList($pdo);
 
-// 全ての ToDo を取得
-$allTodos = $todoList->getAllTodos();
+// 1ページあたりのタスク数
+$tasksPerPage = 5;
 
+// 現在のページ番号を取得（デフォルトは1ページ目）
+$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+
+// ページ番号から取得開始位置を計算
+$start = ($page - 1) * $tasksPerPage;
+
+// 全体のタスク数を取得
+$totalTasks = $todoList->getTotalTasks();
+
+// 総ページ数を計算
+$totalPages = ceil($totalTasks / $tasksPerPage);
+
+// 現在のページに表示するタスクを取得
+$allTodos = $todoList->getAllTodos($start, $tasksPerPage);
 ?>
 
 <!DOCTYPE html>
@@ -85,32 +91,120 @@ $allTodos = $todoList->getAllTodos();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ToDo App</title>
+    <title>ToDo List</title>
+    <style>
+        .task {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .task strong {
+            font-size: 18px;
+        }
+        .task .details {
+            margin-top: 5px;
+            font-size: 14px;
+            color: #666;
+        }
+        .task p {
+            margin-top: 10px;
+        }
+        .green-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            margin-bottom: 20px; /* ボタンとタスクの間隔 */
+        }
+        .green-button:hover {
+            background-color: #45a049;
+        }
+        .header {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 36px;
+        }
+        .btn-edit, .btn-delete {
+            display: inline-block;
+            padding: 8px 15px;
+            background-color: #008CBA;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-right: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn-edit:hover, .btn-delete:hover {
+            background-color: #005f6b;
+        }
+        .pagination {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .pagination a, .pagination span {
+            display: inline-block;
+            padding: 8px 16px;
+            text-decoration: none;
+            margin: 0 4px;
+        }
+        .pagination a {
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 4px;
+        }
+        .pagination a:hover {
+            background-color: #45a049;
+        }
+        .pagination span {
+            background-color: #ddd;
+            color: #333;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 <body>
-    <h1>ToDo List</h1>
-    <ul>
-        <?php foreach ($allTodos as $todo): ?>
-            <li>
-                <div>
-                    <strong><?= htmlspecialchars($todo['title']) ?></strong> - 作成日時: <?= htmlspecialchars($todo['created_at']) ?>、更新日時: <?= htmlspecialchars($todo['updated_at']) ?>
-                </div>
-                <div>
-                    <a href='edit.php?id=<?= $todo['id'] ?>'>Edit</a>
-                    <a href='delete.php?id=<?= $todo['id'] ?>'>Delete</a>
-                </div>
-            </li>
-        <?php endforeach; ?>
-    </ul>
+    <div class="header">
+        <h1>ToDo List</h1>
+    </div>
+    <a href="task_add.php" class="green-button">New Task</a>
+    <?php foreach ($allTodos as $todo): ?>
+        <div class="task">
+            <strong><?= htmlspecialchars($todo['title']) ?></strong>
+            <div class="details">
+                Created: <?= htmlspecialchars($todo['created_at']) ?>, Updated: <?= htmlspecialchars($todo['updated_at']) ?>
+            </div>
+            <p><?= nl2br(htmlspecialchars($todo['content'])) ?></p>
+            <div>
+                <button class="btn-edit" onclick="location.href='edit.php?id=<?= $todo['id'] ?>'">Edit</button>
+                <button class="btn-delete" onclick="location.href='delete.php?id=<?= $todo['id'] ?>'">Delete</button>
+            </div>
+        </div>
+    <?php endforeach; ?>
 
-    <h2>New Task</h2>
-    <form action="" method="post">
-        <label for="title">Title:</label><br>
-        <input type="text" id="title" name="title" required><br><br>
-        <label for="content">Content:</label><br>
-        <textarea id="content" name="content" required></textarea><br><br>
-        <input type="submit" value="Create">
-    </form>
+    <!-- ページネーションリンクを表示 -->
+    <div class="pagination">
+        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+            <?php if ($i == $page): ?>
+                <span><?= $i ?></span>
+            <?php else: ?>
+                <a href="?page=<?= $i ?>"><?= $i ?></a>
+            <?php endif; ?>
+        <?php endfor; ?>
+    </div>
 </body>
 </html>
+
+
 

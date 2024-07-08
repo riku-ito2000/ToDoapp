@@ -1,14 +1,15 @@
 <?php
-require_once 'config.php';
 
-function connectDB() {
-    // 接続情報を使用してデータベースに接続
+function connectDB()
+{
+    $dbn = 'mysql:dbname=TODOapp;host=localhost;charset=utf8';
+    $user = 'root';
+    $password = 'root';
     try {
-        // var_dump("mysql:host=".databaseHost.";dbname=".databaseName);
-        $pdo = new PDO("mysql:host=".databaseHost.";dbname=".databaseName, databaseUsername, databasePassword);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        return $pdo;
-    } catch (PDOException $e) {
+        $dbh = new PDO($dbn, $user, $password);
+        $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        return $dbh;
+    } catch (Exception $e) {
         die("データベースに接続できません: " . $e->getMessage());
     }
 }
