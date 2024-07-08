@@ -52,7 +52,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 // フォームの設定
-
 include 'templates/header.php';
 include 'templates/footer.php';
 ?>
