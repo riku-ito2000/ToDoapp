@@ -1,15 +1,18 @@
 <?php
-require_once 'connect_db.php';
+require 'connect_db.php';
+require 'ToDo.php';
+require 'ToDoList.php';
 
 // データベース接続を確立
 $pdo = connectDB();
+$todoList = new ToDoList($pdo);
 
 // フォームから送信されたデータがある場合は、追加処理を行う
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = $_POST['title'] ?? '';
     $content = $_POST['content'] ?? '';
     $createdTime = date('Y-m-d H:i:s');
-    $updatedTime = date('Y-m-d H:i:s');
+    $updatedTime = $createdTime;
 
     // バリデーション
     $errors = [];
@@ -28,90 +31,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo "<p>$error</p>";
         }
     } else {
-        // データベースに挿入
-        $stmt = $pdo->prepare("INSERT INTO todosTable (title, content, created_at, updated_at) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$title, $content, $createdTime, $updatedTime]);
+        // 新しいToDoを追加
+        $todo = new ToDo(null, $title, $content, $createdTime, $updatedTime);
+        $todoList->add($todo);
 
         // 成功メッセージまたはリダイレクト
-        header('Location: index.php'); // インデックスページにリダイレクト
+        header('Location: index.php');
         exit();
     }
 }
+// フォームの設定
+$formTitle = 'New Task';
+$formAction = 'task_add.php';
+$submitLabel = 'Create';
+
+include 'templates/header.php';
+include 'templates/task_form.php';
+include 'templates/footer.php';
 ?>
-
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Task</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            padding: 20px;
-        }
-        .edit-form {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        .edit-form label {
-            font-weight: bold;
-        }
-        .edit-form input[type="text"],
-        .edit-form textarea {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-        .edit-form textarea {
-            height: 150px; /* テキストエリアの高さを調整 */
-        }
-        .edit-form input[type="submit"] {
-            background-color: #4CAF50;
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .edit-form input[type="submit"]:hover {
-            background-color: #45a049;
-        }
-        .edit-form a {
-            display: inline-block;
-            margin-top: 10px;
-            color: #007bff;
-            text-decoration: none;
-            font-size: 16px;
-        }
-        .edit-form a:hover {
-            text-decoration: underline;
-        }
-    </style>
-</head>
-<body>
-    <div class="edit-form">
-        <h1>New Task</h1>
-
-        <form action="task_add.php" method="post">
-            <label for="title">Title:</label><br>
-            <input type="text" id="title" name="title" required><br><br>
-            <label for="content">Content:</label><br>
-            <textarea id="content" name="content" required></textarea><br><br>
-            <input type="submit" value="Create">
-        </form>
-
-        <a href="index.php">Back to ToDo List</a>
-    </div>
-</body>
-</html>

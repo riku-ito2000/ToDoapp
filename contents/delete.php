@@ -4,17 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Delete ToDo</title>
-    <style>
-        .task-container {
-            border: 2px solid #ccc;
-            padding: 10px;
-            background-color: #f9f9f9;
-            margin-bottom: 20px;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css"> <!-- CSSファイルをリンク -->
     <script>
         function confirmDelete() {
-            return confirm("本当に削除しますか？");
+            return confirm("Do you wish to remove this?");
         }
     </script>
 </head>
@@ -40,19 +33,19 @@
     }
     ?>
     
-    <h1>本当にタスクを削除しますか？</h1>
+    <h1>Do you wish to remove this?</h1>
     
     <!-- タスクを枠で囲んで表示 -->
     <div class="task-container">
         <p><strong>Title:</strong> <?= htmlspecialchars($todo['title']) ?></p>
         <p><strong>Content:</strong> <?= nl2br(htmlspecialchars($todo['content'])) ?></p>
-        <p><strong>作成日時:</strong> <?= htmlspecialchars($todo['created_at']) ?></p>
-        <p><strong>更新日時:</strong> <?= htmlspecialchars($todo['updated_at']) ?></p>
+        <p><strong>Created:</strong> <?= htmlspecialchars($todo['created_at']) ?></p>
+        <p><strong>Updated:</strong> <?= htmlspecialchars($todo['updated_at']) ?></p>
     </div>
     
     <form action="" method="post">
         <input type="submit" name="confirm_delete" value="削除する" onclick="return confirmDelete();">
-        <button type="button" onclick="location.href='index.php'">キャンセル</button>
+        <button type="button" onclick="location.href='index.php'">Cancel</button>
     </form>
     
     <?php
